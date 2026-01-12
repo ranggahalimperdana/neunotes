@@ -316,7 +316,7 @@ export default function App() {
                 <div className="bg-[#34A853] border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all duration-200 ease-out rounded-lg">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <div><h1 className="font-black text-2xl text-black tracking-tight group-hover:text-[#34A853] transition-colors">Uni<span className="text-[#4285F4]">Notes</span></h1></div>
+                <div><h1 className="font-black text-2xl text-black tracking-tight group-hover:text-[#34A853] transition-colors">Neu<span className="text-[#4285F4]">Notes</span></h1></div>
               </button>
               <div className="flex items-center gap-4">
                 {isLoggedIn && userData && (
@@ -380,7 +380,7 @@ export default function App() {
               <div className="bg-[#34A853] border-2 border-black p-2 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
-              <h1 className="font-black text-2xl text-black tracking-tight">Uni<span className="text-[#4285F4]">Notes</span></h1>
+              <h1 className="font-black text-2xl text-black tracking-tight">Neu<span className="text-[#4285F4]">Notes</span></h1>
             </div>
             
             <div className="flex items-center gap-4">

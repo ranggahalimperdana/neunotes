@@ -28,10 +28,8 @@ export interface Profile {
   id_semester?: string;
   id_courses?: string;
   created_at: string;
-  // Tambahan untuk menampung hasil join
   faculties?: { faculty_name: string };
   prodi?: { prodi_name: string };
-  // Properti alternatif jika mapping manual dilakukan
   faculty_name?: string;
   prodi_name?: string;
 }
@@ -107,7 +105,6 @@ export const authService = {
     if (error) throw error;
   },
 
-  // MENGAMBIL DATA USER + JOIN NAMA FAKULTAS & PRODI
   getCurrentUserWithRole: async (): Promise<any> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -280,7 +277,6 @@ export const masterService = {
     }));
   },
 
-  // NEW: Get Recent Notes for Timeline
   getRecentNotes: async () => {
     const { data, error } = await supabase
       .from('notes')

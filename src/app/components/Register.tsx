@@ -124,14 +124,6 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-8 font-mono">
       {/* Modal */}
       <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl mx-4 animate-in zoom-in-95 duration-300 my-8 relative">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 bg-[#EA4335] border-2 border-black flex items-center justify-center transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5 text-white" />
-        </button>
 
         {/* Header */}
         <div className="pt-12 pb-8 px-8 text-center bg-[#4285F4] border-b-2 border-black">
@@ -143,7 +135,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
             Buat Akun Baru
           </h2>
           <p className="text-white font-bold">
-            Bergabung dengan ribuan mahasiswa lainnya
+            Bergabung dengan mahasiswa lainnya di UniNotes!
           </p>
         </div>
 
@@ -346,21 +338,6 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
             </div>
           </div>
 
-          {/* Terms & Conditions */}
-          <div className="bg-[#4285F4]/10 border-2 border-[#4285F4] p-4 border-dashed">
-            <p className="text-sm text-black font-bold">
-              Dengan mendaftar, Anda menyetujui{' '}
-              <a href="#" className="text-[#4285F4] hover:underline decoration-2">
-                Syarat & Ketentuan
-              </a>{' '}
-              serta{' '}
-              <a href="#" className="text-[#4285F4] hover:underline decoration-2">
-                Kebijakan Privasi
-              </a>{' '}
-              UniNotes.
-            </p>
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -391,6 +368,16 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
             </button>
           </p>
         </div>
+
+        {/* Close Button - DILETAKKAN PALING BAWAH AGAR MUNCUL PALING DEPAN (Z-INDEX MENANG) */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 bg-[#EA4335] border-2 border-black flex items-center justify-center transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-50"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
+
       </div>
     </div>
   );

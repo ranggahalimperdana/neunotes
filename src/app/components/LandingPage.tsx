@@ -97,9 +97,9 @@ export default function LandingPage({ onLoginClick, onRegisterClick }: LandingPa
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-black flex items-center justify-center rounded-sm">
-              <span className="text-white font-black text-xl">U</span>
+              <span className="text-white font-black text-xl">N</span>
             </div>
-            <span className="text-xl font-black tracking-tighter uppercase">UniNotes</span>
+            <span className="text-xl font-black tracking-tighter uppercase">Neunotes</span>
           </div>
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4">
             <button 
@@ -164,7 +164,7 @@ export default function LandingPage({ onLoginClick, onRegisterClick }: LandingPa
 
           {/* 3. SUBHEADLINE */}
           <p className="text-xl sm:text-2xl font-bold text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            UniNotes adalah tempat mahasiswa berbagi catatan, menemukan jawaban tugas, dan salin berbagi pengetahuan.
+            Neunotes adalah tempat mahasiswa berbagi catatan, menemukan jawaban tugas, dan salin berbagi pengetahuan.
           </p>
 
           {/* 4. CTA BUTTONS */}
@@ -219,9 +219,9 @@ export default function LandingPage({ onLoginClick, onRegisterClick }: LandingPa
             <div className="md:col-span-6 space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 bg-[#FBBC05] border-2 border-white flex items-center justify-center rounded-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-                  <span className="text-black font-black text-2xl">U</span>
+                  <span className="text-black font-black text-2xl">N</span>
                 </div>
-                <span className="text-3xl font-black tracking-tighter uppercase text-white">UniNotes</span>
+                <span className="text-3xl font-black tracking-tighter uppercase text-white">NeuNotes</span>
               </div>
               <p className="font-bold text-gray-400 text-lg leading-relaxed max-w-sm">
                 Platform berbagi catatan untuk mahasiswa UIR. Belajar bareng, Share Catatan & Tugas.
@@ -248,7 +248,7 @@ export default function LandingPage({ onLoginClick, onRegisterClick }: LandingPa
                    </div>
                    <div className="flex flex-col">
                       <span className="text-[10px] font-bold uppercase text-gray-400 group-hover:text-white/80">Email Kami</span>
-                      <span className="font-bold text-sm">dev@uninotes.id</span>
+                      <span className="font-bold text-sm">ranggacoders@gmail.com</span>
                    </div>
                 </a>
               </div>
@@ -259,13 +259,13 @@ export default function LandingPage({ onLoginClick, onRegisterClick }: LandingPa
           {/* BOTTOM BAR */}
           <div className="border-t-2 border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-bold text-gray-500">
             <p className="flex flex-wrap justify-center items-center gap-2 text-center leading-normal">
-              <span>© 2024 UniNotes. Dibuat Oleh</span>
+              <span>© 2026 NeuNotes. Dibuat Oleh</span>
               <Heart className="w-4 h-4 text-[#EA4335] fill-[#EA4335] inline-block" />
               <span>Kelompok Satu.</span>
             </p>
             <div className="flex gap-6">
               <span className="hover:text-white cursor-pointer"> BigThanks To</span>
-              <span className="hover:text-white cursor-pointer">Figma AI </span>
+              <span className="hover:text-white cursor-pointer">Teman teman yang telah membantu dalam meyelesaikan project capstone kami</span>
             </div>
           </div>
 

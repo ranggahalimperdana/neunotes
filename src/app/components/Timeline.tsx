@@ -12,6 +12,7 @@ interface Post {
   prodi: string;
   uploadedBy: string;
   author: string;
+  authorImage?: string; // TAMBAHAN: Properti untuk foto author
   createdAt: string;
   fileType: 'PDF' | 'IMG';
   fileData?: string; // URL File
@@ -43,11 +44,9 @@ export default function Timeline({ userEmail }: TimelineProps) {
   const loadPosts = async () => {
     try {
       setIsLoading(true);
-      // Kita pakai adminService.getAllPosts karena fungsi ini mengembalikan data LENGKAP (termasuk fileData)
       const data = await adminService.getAllPosts();
 
       if (data) {
-        // Mapping data agar sesuai interface Post
         const formattedPosts: Post[] = data.map((note: any) => ({
           id: note.id,
           title: note.title,
@@ -57,9 +56,9 @@ export default function Timeline({ userEmail }: TimelineProps) {
           prodi: note.prodi,
           uploadedBy: note.uploadedBy,
           author: note.author || 'Mahasiswa',
+          authorImage: note.authorImage, // TAMBAHAN: Map foto author
           createdAt: note.createdAt,
           fileType: note.fileType || 'PDF', 
-          // Pastikan properti ini sesuai dengan return dari api.ts (fileData)
           fileData: note.fileData, 
           description: note.description
         }));
@@ -78,10 +77,8 @@ export default function Timeline({ userEmail }: TimelineProps) {
     if (!dateString) return '-';
     const date = new Date(dateString);
     
-    // Cek apakah tanggal valid
     if (isNaN(date.getTime())) return 'Baru saja';
 
-    // Format: 12 Jan 2024
     return new Intl.DateTimeFormat('id-ID', {
       day: 'numeric',
       month: 'short',
@@ -96,25 +93,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
         return;
     }
     window.open(post.fileData, '_blank');
-  };
-
-  // --- 4. FUNGSI WAKTU RELATIF (OPSIONAL) ---
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Baru saja';
-
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInMinutes = Math.floor(diffInMs / 60000);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInMinutes < 1) return 'Baru saja';
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    if (diffInHours < 24) return `${diffInHours}j`;
-    if (diffInDays < 7) return `${diffInDays}h`;
-    
-    return formatDate(dateString);
   };
 
   // --- LOGIC SCROLL ---
@@ -206,7 +184,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
               </div>
             ) : (
               posts.map((post, index) => {
-                const engagement = getEngagement(post.id);
                 const isNew = index < 3; 
                 
                 return (
@@ -220,12 +197,19 @@ export default function Timeline({ userEmail }: TimelineProps) {
                     {/* Post Header */}
                     <div className="bg-gradient-to-r from-blue-500 to-purple-500 border-b-3 sm:border-b-4 border-black p-3 sm:p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-400 border-2 border-black flex items-center justify-center rounded-lg shadow-sm">
-                          <span className="font-black text-white text-lg">{post.author ? post.author.charAt(0).toUpperCase() : 'U'}</span>
+                        
+                        {/* --- FOTO PROFIL LOGIC --- */}
+                        <div className="w-10 h-10 bg-yellow-400 border-2 border-black flex items-center justify-center rounded-lg shadow-sm overflow-hidden">
+                          {post.authorImage ? (
+                             <img src={post.authorImage} alt={post.author} className="w-full h-full object-cover" />
+                          ) : (
+                             <span className="font-black text-white text-lg">{post.author ? post.author.charAt(0).toUpperCase() : 'U'}</span>
+                          )}
                         </div>
+                        {/* ------------------------- */}
+
                         <div className="min-w-0">
                           <p className="font-black text-sm text-white truncate">{post.author}</p>
-                          {/* FIX TANGGAL DISINI */}
                           <p className="text-xs text-white/90 font-bold">{formatDate(post.createdAt)}</p>
                         </div>
                       </div>
