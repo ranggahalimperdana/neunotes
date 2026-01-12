@@ -254,11 +254,12 @@ export const masterService = {
   },
 
   getNotesByCourse: async (courseId: string) => {
+    // 🔧 UPDATE: Mengambil user_profile untuk foto di Course Detail
     const { data, error } = await supabase
       .from('notes')
       .select(`
         *,
-        profiles:id_user (full_name) 
+        profiles:id_user (full_name, user_profile) 
       `) 
       .eq('id_courses', courseId)
       .order('created_at', { ascending: false });
@@ -273,6 +274,7 @@ export const masterService = {
       fileUrl: item.file_catatan,
       createdAt: item.created_at,
       uploaderName: item.profiles?.full_name || 'Mahasiswa',
+      uploaderImage: item.profiles?.user_profile, // Mapping ke uploaderImage
       downloadCount: 0 
     }));
   },
@@ -380,11 +382,12 @@ export const adminService = {
   },
 
   getAllPosts: async () => {
+    // 🔧 UPDATE: Mengambil user_profile untuk foto di Timeline
     const { data, error } = await supabase
       .from('notes')
       .select(`
         *,
-        profiles:id_user (full_name),
+        profiles:id_user (full_name, user_profile), 
         courses:id_courses (matkul_code, matkul_name),
         prodi:id_prodi (prodi_name),
         faculties:id_faculty (faculty_name)
@@ -402,6 +405,7 @@ export const adminService = {
       prodi: note.prodi?.prodi_name || '-',
       uploadedBy: note.id_user,
       author: note.profiles?.full_name || 'Unknown',
+      authorImage: note.profiles?.user_profile, // Mapping ke authorImage
       createdAt: note.created_at,
       fileType: note.catatan_type,
       fileData: note.file_catatan,
