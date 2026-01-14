@@ -454,7 +454,7 @@ export default function AdminDashboard({ adminEmail, currentUserRole, onLogout }
                   <div className="bg-gradient-to-br from-red-500 to-orange-500 p-20 text-center min-h-[500px] flex flex-col items-center justify-center">
                     <FileText className="w-32 h-32 text-white mb-6" />
                     <p className="font-black text-white text-4xl mb-3">FILE PDF</p>
-                    <a href={previewPost.fileData} target="_blank" rel="noopener noreferrer" className="mt-6 bg-white text-red-500 px-6 py-3 rounded-lg font-bold border-2 border-black shadow-md hover:shadow-none hover:translate-y-1 transition-all">DOWNLOAD / LIHAT PDF</a>
+                    <a href={previewPost.fileData} target="_blank" rel="noopener noreferrer" className="mt-6 bg-white text-red-500 px-6 py-3 rounded-lg font-bold border-2 border-black shadow-md hover:shadow-none hover:translate-y-1 transition-all">LIHAT PDF/Image</a>
                   </div>
                 )
               ) : (
