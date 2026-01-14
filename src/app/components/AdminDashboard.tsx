@@ -107,10 +107,17 @@ export default function AdminDashboard({ adminEmail, currentUserRole, onLogout }
   };
 
   const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
-    // Security Check: Only Super Admin can change roles
-    if (currentUserRole !== 'super_admin') {
-        alert("AKSES DITOLAK: Hanya Super Admin yang bisa mengubah role user.");
+    // 🔧 UPDATE: Izinkan Admin & Super Admin untuk mengubah role
+    if (currentUserRole !== 'super_admin' && currentUserRole !== 'admin') {
+        alert("AKSES DITOLAK: Anda tidak memiliki izin untuk mengubah role.");
         return;
+    }
+
+    // 🔧 UPDATE: Proteksi Akun Super Admin (Tidak bisa diubah oleh siapapun)
+    const targetUser = users.find(u => u.id_user === userId);
+    if (targetUser && targetUser.role === 'super_admin') {
+         alert("AKSES DITOLAK: Tidak dapat mengubah akun Super Admin.");
+         return;
     }
 
     setActionLoading(userId);
@@ -403,11 +410,25 @@ export default function AdminDashboard({ adminEmail, currentUserRole, onLogout }
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-black flex items-center justify-center rounded-xl">
-                          <span className="font-black text-white text-xl">
-                            {user.full_name?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        
+                        {/* --- PERBAIKAN: LOGIKA AVATAR/INISIAL --- */}
+                        {user.user_profile ? (
+                            // Jika ada foto profil, tampilkan foto
+                            <img 
+                                src={user.user_profile} 
+                                alt={user.full_name} 
+                                className="w-12 h-12 rounded-xl border-2 border-black object-cover"
+                            />
+                        ) : (
+                            // Jika tidak ada foto, tampilkan inisial (Fallback)
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-black flex items-center justify-center rounded-xl">
+                              <span className="font-black text-white text-xl">
+                                {user.full_name?.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                        )}
+                        {/* -------------------------------------- */}
+
                         <div>
                           <h3 className="font-black text-xl">{user.full_name}</h3>
                           <p className="text-sm font-bold text-gray-600">{user.email}</p>
@@ -425,38 +446,41 @@ export default function AdminDashboard({ adminEmail, currentUserRole, onLogout }
                       {/* Action Buttons: Only show if NOT self and based on permissions */}
                       {user.id_user !== undefined && user.email !== adminEmail && (
                         <div className="flex gap-2">
-                            {/* Super Admin Actions */}
-                            {currentUserRole === 'super_admin' ? (
+                            {/* Logic: Admin & Super Admin Actions */}
+                            {/* 🔧 UPDATE: Tampilkan tombol untuk 'admin' dan 'super_admin' */}
+                            {(currentUserRole === 'super_admin' || currentUserRole === 'admin') ? (
                                 <>
-                                    {/* User -> Admin */}
-                                    {user.role === 'user' && (
-                                        <button
-                                            onClick={() => setShowPromoteConfirm(user.email)}
-                                            className="bg-green-500 text-white px-4 py-2 border-2 border-black font-bold rounded-lg hover:bg-green-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-2"
-                                        >
-                                            <ArrowUpCircle className="w-4 h-4" /> JADIKAN ADMIN
-                                        </button>
-                                    )}
-
-                                    {/* Admin -> User */}
-                                    {user.role === 'admin' && (
-                                        <button
-                                            onClick={() => setShowDemoteConfirm(user.email)}
-                                            className="bg-orange-500 text-white px-4 py-2 border-2 border-black font-bold rounded-lg hover:bg-orange-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-2"
-                                        >
-                                            <ArrowDownCircle className="w-4 h-4" /> TURUNKAN
-                                        </button>
-                                    )}
-                                    
-                                    {/* Super Admin (Protected) */}
-                                    {user.role === 'super_admin' && (
+                                    {/* Prevent actions on Super Admin targets */}
+                                    {user.role === 'super_admin' ? (
                                         <span className="text-gray-400 font-bold text-xs flex items-center gap-1 border-2 border-transparent px-2 py-1">
                                             <Shield className="w-4 h-4" /> MASTER ACCOUNT
                                         </span>
+                                    ) : (
+                                        <>
+                                            {/* User -> Admin */}
+                                            {user.role === 'user' && (
+                                                <button
+                                                    onClick={() => setShowPromoteConfirm(user.email)}
+                                                    className="bg-green-500 text-white px-4 py-2 border-2 border-black font-bold rounded-lg hover:bg-green-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-2"
+                                                >
+                                                    <ArrowUpCircle className="w-4 h-4" /> JADIKAN ADMIN
+                                                </button>
+                                            )}
+
+                                            {/* Admin -> User */}
+                                            {user.role === 'admin' && (
+                                                <button
+                                                    onClick={() => setShowDemoteConfirm(user.email)}
+                                                    className="bg-orange-500 text-white px-4 py-2 border-2 border-black font-bold rounded-lg hover:bg-orange-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-2"
+                                                >
+                                                    <ArrowDownCircle className="w-4 h-4" /> TURUNKAN
+                                                </button>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             ) : (
-                                // Admin View (Cannot change roles)
+                                // User Biasa (Cannot change roles)
                                 <span className="text-gray-400 font-bold text-xs flex items-center gap-1 border-2 border-transparent px-2 py-1">
                                     <Shield className="w-4 h-4" /> AKSES DIBATASI
                                 </span>

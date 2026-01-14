@@ -254,7 +254,7 @@ export const masterService = {
   },
 
   getNotesByCourse: async (courseId: string) => {
-    // 🔧 UPDATE: Mengambil user_profile untuk foto di Course Detail
+    // 🔧 UPDATE: Mengambil user_profile
     const { data, error } = await supabase
       .from('notes')
       .select(`
@@ -274,7 +274,7 @@ export const masterService = {
       fileUrl: item.file_catatan,
       createdAt: item.created_at,
       uploaderName: item.profiles?.full_name || 'Mahasiswa',
-      uploaderImage: item.profiles?.user_profile, // Mapping ke uploaderImage
+      uploaderImage: item.profiles?.user_profile, // 🔧 MAPPING FOTO PROFIL
       downloadCount: 0 
     }));
   },
@@ -352,8 +352,9 @@ export const adminService = {
     const currentUser = await authService.getCurrentUserWithRole();
     if (!currentUser) throw new Error("User tidak ditemukan.");
 
-    if (currentUser.role !== 'super_admin') {
-        throw new Error("AKSES DITOLAK: Hanya Super Admin yang memiliki hak akses ini.");
+    // 🔧 UPDATE: Izinkan 'admin' dan 'super_admin'
+    if (currentUser.role !== 'super_admin' && currentUser.role !== 'admin') {
+        throw new Error("AKSES DITOLAK: Anda tidak memiliki izin.");
     }
 
     if (currentUser.id_user === targetUserId) {
@@ -368,6 +369,7 @@ export const adminService = {
 
     if (targetError || !targetUser) throw new Error("Target user tidak ditemukan.");
 
+    // 🔧 UPDATE: Proteksi Akun Super Admin
     if (targetUser.role === 'super_admin') {
        throw new Error("AKSES DITOLAK: Tidak bisa mengubah akun Super Admin.");
     }
@@ -382,7 +384,7 @@ export const adminService = {
   },
 
   getAllPosts: async () => {
-    // 🔧 UPDATE: Mengambil user_profile untuk foto di Timeline
+    // 🔧 UPDATE: Mengambil user_profile
     const { data, error } = await supabase
       .from('notes')
       .select(`
@@ -405,7 +407,7 @@ export const adminService = {
       prodi: note.prodi?.prodi_name || '-',
       uploadedBy: note.id_user,
       author: note.profiles?.full_name || 'Unknown',
-      authorImage: note.profiles?.user_profile, // Mapping ke authorImage
+      authorImage: note.profiles?.user_profile, // 🔧 MAPPING FOTO PROFIL
       createdAt: note.created_at,
       fileType: note.catatan_type,
       fileData: note.file_catatan,

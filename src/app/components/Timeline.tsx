@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Clock, FileText, Download, Eye, Zap, ChevronLeft, ChevronRight, Star, Image as ImageIcon } from 'lucide-react';
+import { Clock, FileText, Download, Eye, Zap, ChevronLeft, ChevronRight, Star, Image as ImageIcon, Loader2 } from 'lucide-react';
 // IMPORT SERVICE API
 import { adminService } from '../services/api'; 
 
@@ -30,6 +30,8 @@ export default function Timeline({ userEmail }: TimelineProps) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk loading download
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPosts();
@@ -84,14 +86,49 @@ export default function Timeline({ userEmail }: TimelineProps) {
     }).format(date);
   };
 
-  // --- 3. FUNGSI BUKA LINK (DIRECT) ---
-  const openFileDirectly = (post: Post) => {
+  // --- 3. FUNGSI VIEW (Preview di Tab Baru) ---
+  const handleView = (post: Post) => {
     if (!post.fileData) {
         alert("File tidak ditemukan / Url rusak");
         return;
     }
-    // Langsung buka link di tab baru
     window.open(post.fileData, '_blank');
+  };
+
+  // --- 4. FUNGSI DOWNLOAD (Force Download) ---
+  const handleDownload = async (post: Post) => {
+    if (!post.fileData) return;
+
+    try {
+      setDownloadingId(post.id);
+      
+      // Fetch file sebagai blob
+      const response = await fetch(post.fileData);
+      const blob = await response.blob();
+      
+      // Buat URL objek sementara
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Tentukan nama file
+      const extension = post.fileType === 'PDF' ? 'pdf' : 'jpg';
+      const fileName = `${post.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${extension}`;
+      
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback jika fetch gagal (misal kena CORS), buka di tab baru
+      window.open(post.fileData, '_blank');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   // --- LOGIC SCROLL ---
@@ -167,7 +204,7 @@ export default function Timeline({ userEmail }: TimelineProps) {
             {isLoading && posts.length === 0 ? (
                <div className="w-full flex items-center justify-center min-h-[400px]">
                  <div className="flex flex-col items-center">
-                    <div className="animate-spin w-12 h-12 border-4 border-black border-t-yellow-400 rounded-full mb-4"></div>
+                    <Loader2 className="animate-spin w-12 h-12 text-[#4285F4] mb-4" />
                     <p className="font-bold">Memuat Timeline...</p>
                  </div>
                </div>
@@ -224,10 +261,10 @@ export default function Timeline({ userEmail }: TimelineProps) {
                         </div>
                       )}
 
-                      {/* File Preview Thumbnail (Klik Langsung Buka Link) */}
+                      {/* File Preview Thumbnail (Klik untuk View) */}
                       <div 
                         className="mt-3 border-3 border-black rounded-lg overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:opacity-90 transition-opacity bg-gray-100 flex items-center justify-center h-40"
-                        onClick={() => openFileDirectly(post)}
+                        onClick={() => handleView(post)}
                       >
                         {post.fileType === 'IMG' && post.fileData ? (
                             <img src={post.fileData} alt="Preview" className="w-full h-full object-cover" />
@@ -243,18 +280,24 @@ export default function Timeline({ userEmail }: TimelineProps) {
                       <div className="flex gap-2 mt-4">
                         {/* TOMBOL LIHAT -> Langsung Buka Link */}
                         <button
-                          onClick={() => openFileDirectly(post)}
+                          onClick={() => handleView(post)}
                           className="flex-1 flex items-center justify-center gap-2 bg-blue-500 text-white px-3 py-2 border-2 border-black font-black hover:bg-blue-600 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-xs"
                         >
                           <Eye className="w-4 h-4" /> LIHAT
                         </button>
                         
-                        {/* TOMBOL UNDUH -> Langsung Buka Link */}
+                        {/* TOMBOL UNDUH -> Force Download */}
                         <button
-                          onClick={() => openFileDirectly(post)}
-                          className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white px-3 py-2 border-2 border-black font-black hover:bg-green-600 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-xs"
+                          onClick={() => handleDownload(post)}
+                          disabled={downloadingId === post.id}
+                          className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white px-3 py-2 border-2 border-black font-black hover:bg-green-600 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-xs disabled:opacity-70 disabled:cursor-wait"
                         >
-                          <Download className="w-4 h-4" /> UNDUH
+                          {downloadingId === post.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" /> 
+                          )}
+                          UNDUH
                         </button>
                       </div>
                     </div>
