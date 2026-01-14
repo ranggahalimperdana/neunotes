@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Upload, FileText, X, Trash2, Edit2, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, X, Trash2, Edit2, Loader2, CheckCircle, Eye } from 'lucide-react';
 // IMPORT SERVICES
 import { authService, masterService, supabase, Semester, Course } from '../services/api';
 
@@ -435,13 +435,23 @@ export default function UploadNotes({ onBack, userFaculty, userProdi }: UploadNo
                                 <p className="text-sm font-bold text-gray-500 mb-3">{note.course_title}</p>
                                 <p className="text-sm text-gray-700 line-clamp-3">{note.description}</p>
                             </div>
-                            <div className="p-4 border-t-2 border-black flex gap-2 bg-gray-50">
-                                <button onClick={() => handleEdit(note)} className="flex-1 py-2 border-2 border-black font-bold hover:bg-[#FBBC05] transition-colors flex justify-center items-center gap-2 text-sm uppercase rounded-lg">
-                                    <Edit2 className="w-4 h-4" /> Edit
+                            <div className="p-4 border-t-2 border-black bg-gray-50 flex flex-col gap-2">
+                                {/* Tombol Preview Baru */}
+                                <button 
+                                    onClick={() => window.open(note.file_url, '_blank')}
+                                    className="w-full py-2 border-2 border-black font-bold bg-white hover:bg-blue-50 transition-colors flex justify-center items-center gap-2 text-sm uppercase rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px]"
+                                >
+                                    <Eye className="w-4 h-4" /> Lihat File
                                 </button>
-                                <button onClick={() => handleDelete(note.id)} className="flex-1 py-2 border-2 border-black font-bold hover:bg-[#EA4335] hover:text-white transition-colors flex justify-center items-center gap-2 text-sm uppercase rounded-lg">
-                                    <Trash2 className="w-4 h-4" /> Hapus
-                                </button>
+
+                                <div className="flex gap-2">
+                                    <button onClick={() => handleEdit(note)} className="flex-1 py-2 border-2 border-black font-bold hover:bg-[#FBBC05] transition-colors flex justify-center items-center gap-2 text-sm uppercase rounded-lg">
+                                        <Edit2 className="w-4 h-4" /> Edit
+                                    </button>
+                                    <button onClick={() => handleDelete(note.id)} className="flex-1 py-2 border-2 border-black font-bold hover:bg-[#EA4335] hover:text-white transition-colors flex justify-center items-center gap-2 text-sm uppercase rounded-lg">
+                                        <Trash2 className="w-4 h-4" /> Hapus
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

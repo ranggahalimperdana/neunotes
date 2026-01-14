@@ -12,7 +12,7 @@ interface Post {
   prodi: string;
   uploadedBy: string;
   author: string;
-  authorImage?: string; // TAMBAHAN: Properti untuk foto author
+  authorImage?: string; // Foto profil
   createdAt: string;
   fileType: 'PDF' | 'IMG';
   fileData?: string; // URL File
@@ -26,7 +26,6 @@ interface TimelineProps {
 
 export default function Timeline({ userEmail }: TimelineProps) {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [previewPost, setPreviewPost] = useState<Post | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -56,7 +55,7 @@ export default function Timeline({ userEmail }: TimelineProps) {
           prodi: note.prodi,
           uploadedBy: note.uploadedBy,
           author: note.author || 'Mahasiswa',
-          authorImage: note.authorImage, // TAMBAHAN: Map foto author
+          authorImage: note.authorImage,
           createdAt: note.createdAt,
           fileType: note.fileType || 'PDF', 
           fileData: note.fileData, 
@@ -72,11 +71,10 @@ export default function Timeline({ userEmail }: TimelineProps) {
     }
   };
 
-  // --- 2. FORMAT TANGGAL AMAN (FIX INVALID DATE) ---
+  // --- 2. FORMAT TANGGAL ---
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    
     if (isNaN(date.getTime())) return 'Baru saja';
 
     return new Intl.DateTimeFormat('id-ID', {
@@ -86,12 +84,13 @@ export default function Timeline({ userEmail }: TimelineProps) {
     }).format(date);
   };
 
-  // --- 3. FUNGSI DOWNLOAD / BUKA FILE ---
-  const handleDownload = (post: Post) => {
+  // --- 3. FUNGSI BUKA LINK (DIRECT) ---
+  const openFileDirectly = (post: Post) => {
     if (!post.fileData) {
         alert("File tidak ditemukan / Url rusak");
         return;
     }
+    // Langsung buka link di tab baru
     window.open(post.fileData, '_blank');
   };
 
@@ -114,11 +113,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
       scrollContainerRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
       setTimeout(checkScrollButtons, 300);
     }
-  };
-
-  const getEngagement = (postId: string) => {
-    const seed = postId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return { views: Math.floor((seed % 50) + 20) };
   };
 
   return (
@@ -197,8 +191,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
                     {/* Post Header */}
                     <div className="bg-gradient-to-r from-blue-500 to-purple-500 border-b-3 sm:border-b-4 border-black p-3 sm:p-4">
                       <div className="flex items-center gap-3">
-                        
-                        {/* --- FOTO PROFIL LOGIC --- */}
                         <div className="w-10 h-10 bg-yellow-400 border-2 border-black flex items-center justify-center rounded-lg shadow-sm overflow-hidden">
                           {post.authorImage ? (
                              <img src={post.authorImage} alt={post.author} className="w-full h-full object-cover" />
@@ -206,8 +198,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
                              <span className="font-black text-white text-lg">{post.author ? post.author.charAt(0).toUpperCase() : 'U'}</span>
                           )}
                         </div>
-                        {/* ------------------------- */}
-
                         <div className="min-w-0">
                           <p className="font-black text-sm text-white truncate">{post.author}</p>
                           <p className="text-xs text-white/90 font-bold">{formatDate(post.createdAt)}</p>
@@ -234,10 +224,10 @@ export default function Timeline({ userEmail }: TimelineProps) {
                         </div>
                       )}
 
-                      {/* File Preview Thumbnail */}
+                      {/* File Preview Thumbnail (Klik Langsung Buka Link) */}
                       <div 
                         className="mt-3 border-3 border-black rounded-lg overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:opacity-90 transition-opacity bg-gray-100 flex items-center justify-center h-40"
-                        onClick={() => setPreviewPost(post)}
+                        onClick={() => openFileDirectly(post)}
                       >
                         {post.fileType === 'IMG' && post.fileData ? (
                             <img src={post.fileData} alt="Preview" className="w-full h-full object-cover" />
@@ -251,14 +241,17 @@ export default function Timeline({ userEmail }: TimelineProps) {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 mt-4">
+                        {/* TOMBOL LIHAT -> Langsung Buka Link */}
                         <button
-                          onClick={() => setPreviewPost(post)}
+                          onClick={() => openFileDirectly(post)}
                           className="flex-1 flex items-center justify-center gap-2 bg-blue-500 text-white px-3 py-2 border-2 border-black font-black hover:bg-blue-600 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-xs"
                         >
                           <Eye className="w-4 h-4" /> LIHAT
                         </button>
+                        
+                        {/* TOMBOL UNDUH -> Langsung Buka Link */}
                         <button
-                          onClick={() => handleDownload(post)}
+                          onClick={() => openFileDirectly(post)}
                           className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white px-3 py-2 border-2 border-black font-black hover:bg-green-600 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-xs"
                         >
                           <Download className="w-4 h-4" /> UNDUH
@@ -272,39 +265,6 @@ export default function Timeline({ userEmail }: TimelineProps) {
           </div>
         </div>
       </div>
-
-      {/* Preview Modal */}
-      {previewPost && (
-        <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4" onClick={() => setPreviewPost(null)}>
-          <div className="relative max-w-4xl w-full max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setPreviewPost(null)} className="absolute -top-12 right-0 bg-white text-black px-4 py-2 border-2 border-black font-black hover:bg-red-500 hover:text-white transition-all rounded-lg shadow-white">
-              TUTUP
-            </button>
-
-            <div className="bg-white border-4 border-black rounded-xl overflow-hidden shadow-2xl">
-              {previewPost.fileData ? (
-                <>
-                  {previewPost.fileType === 'IMG' ? (
-                    <img src={previewPost.fileData} alt={previewPost.title} className="w-full h-auto max-h-[80vh] object-contain bg-gray-100" />
-                  ) : (
-                    <div className="bg-gradient-to-br from-red-500 to-pink-500 p-20 text-center min-h-[400px] flex flex-col items-center justify-center">
-                      <FileText className="w-24 h-24 text-white mb-4 drop-shadow-lg" />
-                      <p className="font-black text-white text-3xl mb-4 drop-shadow-md">FILE PDF</p>
-                      <button onClick={() => handleDownload(previewPost)} className="bg-white text-black px-8 py-3 border-2 border-black font-black hover:bg-green-400 transition-all rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[-2px] hover:translate-x-0">
-                        DOWNLOAD / BUKA PDF
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="bg-gray-200 p-12 text-center">
-                   <p className="font-black text-xl text-gray-500">File tidak tersedia</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
