@@ -41,7 +41,7 @@ export default function Timeline({ userEmail }: TimelineProps) {
     checkScrollButtons();
   }, [posts]);
 
-  // --- 1. LOAD DATA DARI DATABASE ---
+  // --- 1. LOAD DATA DARI DATABASE (DENGAN FILTER WAKTU) ---
   const loadPosts = async () => {
     try {
       setIsLoading(true);
@@ -64,7 +64,26 @@ export default function Timeline({ userEmail }: TimelineProps) {
           description: note.description
         }));
 
-        setPosts(formattedPosts);
+        // --- KONFIGURASI FILTER WAKTU ---
+        const timeLimit = new Date();
+
+        // 🟢 OPSI 1: 10 Menit Terakhir (SEDANG AKTIF)
+        timeLimit.setMinutes(timeLimit.getMinutes() - 10);
+
+        // 🟡 OPSI 2: 24 Jam Terakhir (Hapus tanda // di bawah untuk mengaktifkan)
+        // timeLimit.setHours(timeLimit.getHours() - 24);
+
+        // 🔴 OPSI 3: 7 Hari Terakhir (Hapus tanda // di bawah untuk mengaktifkan)
+        // timeLimit.setDate(timeLimit.getDate() - 7); 
+
+        // Filter data berdasarkan waktu yang dipilih di atas
+        const recentPosts = formattedPosts.filter(post => {
+            const postDate = new Date(post.createdAt);
+            // Hanya ambil post yang lebih baru dari batas waktu (timeLimit)
+            return postDate >= timeLimit;
+        });
+
+        setPosts(recentPosts);
       }
     } catch (error) {
       console.error("Gagal memuat timeline:", error);
@@ -82,7 +101,9 @@ export default function Timeline({ userEmail }: TimelineProps) {
     return new Intl.DateTimeFormat('id-ID', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit', // Tambah jam biar kelihatan bedanya
+      minute: '2-digit'
     }).format(date);
   };
 
@@ -172,7 +193,7 @@ export default function Timeline({ userEmail }: TimelineProps) {
                   Timeline <Star className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-300 fill-yellow-300" />
                 </h2>
                 <p className="text-white/90 font-bold text-sm sm:text-base lg:text-lg mt-0.5 sm:mt-1">
-                  🔥 {posts.length} catatan terbaru
+                  🔥 {posts.length} catatan terbaru (7 Hari Terakhir)
                 </p>
               </div>
             </div>
@@ -210,8 +231,8 @@ export default function Timeline({ userEmail }: TimelineProps) {
                </div>
             ) : posts.length === 0 ? (
               <div className="w-full max-w-2xl mx-auto bg-gradient-to-br from-gray-50 to-blue-50 border-3 sm:border-4 border-black p-8 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl">
-                <p className="font-black text-gray-900 text-xl uppercase">Belum Ada Posting</p>
-                <p className="text-gray-600 font-bold mb-4">Timeline akan muncul saat ada catatan baru! 🚀</p>
+                <p className="font-black text-gray-900 text-xl uppercase">Belum Ada Posting Baru</p>
+                <p className="text-gray-600 font-bold mb-4">Tidak ada catatan dalam 7 hari terakhir. 🚀</p>
               </div>
             ) : (
               posts.map((post, index) => {
@@ -261,10 +282,10 @@ export default function Timeline({ userEmail }: TimelineProps) {
                         </div>
                       )}
 
-                      {/* File Preview Thumbnail (Klik untuk View) */}
+                      {/* File Preview Thumbnail (Klik untuk Download) */}
                       <div 
                         className="mt-3 border-3 border-black rounded-lg overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:opacity-90 transition-opacity bg-gray-100 flex items-center justify-center h-40"
-                        onClick={() => handleView(post)}
+                        onClick={() => handleDownload(post)}
                       >
                         {post.fileType === 'IMG' && post.fileData ? (
                             <img src={post.fileData} alt="Preview" className="w-full h-full object-cover" />
@@ -295,7 +316,7 @@ export default function Timeline({ userEmail }: TimelineProps) {
                           {downloadingId === post.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Download className="w-4 h-4" /> 
+                            <Download className="w-4 h-4" />
                           )}
                           UNDUH
                         </button>
