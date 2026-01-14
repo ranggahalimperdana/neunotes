@@ -1,68 +1,91 @@
 import { Mail, Lock, Eye, EyeOff, X, Key, ArrowRight, Check, AlertCircle, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { authService, supabase } from '../services/api'; // Import Service & Supabase Client
+// 🔌 Ini kabel data ke Database (Supabase)
+import { authService, supabase } from '../services/api'; 
 
+/* =============================================================================
+   📝 DATA DARI LUAR (PROPS)
+   Data yang dikirim dari halaman Login ke sini.
+   =============================================================================
+*/
 interface ForgotPasswordProps {
-  onClose: () => void;
-  onSwitchToLogin: () => void;
+  onClose: () => void;           // Fungsi buat tutup pop-up ini
+  onSwitchToLogin: () => void;   // Fungsi buat pindah ke halaman Login
 }
 
+/* =============================================================================
+   🔐 HALAMAN LUPA PASSWORD
+   =============================================================================
+*/
 export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPasswordProps) {
+  
+  // --- 🧠 MEMORI SEMENTARA (STATE) ---
+  
+  // 1. TAHAP: Kita lagi di langkah mana? (email -> pin -> password baru -> sukses)
   const [step, setStep] = useState<'email' | 'verify-pin' | 'new-password' | 'success'>('email');
+  
+  // 2. DATA INPUT: Apa yang diketik user?
   const [email, setEmail] = useState('');
   const [passwordForm, setPasswordForm] = useState({
     new: '',
     confirm: ''
   });
+  const [inputPin, setInputPin] = useState(''); // Kode PIN 6 angka
+  
+  // 3. TAMPILAN: Password kelihatan atau titik-titik?
   const [showPassword, setShowPassword] = useState({
     new: false,
     confirm: false
   });
+  
+  // 4. STATUS: Lagi loading (muter-muter) atau ada error?
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // PIN Verification State
-  const [inputPin, setInputPin] = useState('');
-  
-  // Resend Timer State
+  // 5. WAKTU: Hitung mundur buat kirim ulang kode
   const [resendTimer, setResendTimer] = useState(0);
 
+  // --- ⏱️ PENGHITUNG WAKTU MUNDUR ---
   useEffect(() => {
-    let interval: number;
+    let interval: any; // Ubah tipe jadi 'any' biar aman dari error TypeScript
     if (resendTimer > 0) {
       interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
+        setResendTimer((prev) => prev - 1); // Kurangi 1 detik
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Berhenti kalau komponen ditutup
   }, [resendTimer]);
 
-  // Step 1: Request OTP ke Supabase
+  // ===========================================================================
+  // 🚀 LANGKAH 1: KIRIM KODE KE EMAIL
+  // ===========================================================================
   const handleVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault(); // Biar halaman gak refresh sendiri
+    setError('');       // Hapus pesan error lama
 
+    // Cek dulu: Email diisi gak?
     if (!email) {
       setError('Email harus diisi');
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true); // Nyalain loading...
 
     try {
-      // Panggil Supabase untuk kirim OTP tipe recovery
+      // Panggil Supabase: "Eh, kirim kode OTP ke email ini dong!"
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
-            shouldCreateUser: false 
+            shouldCreateUser: false // Cuma buat user lama, jangan buat baru
         }
       });
       
-      if (error) throw error;
+      if (error) throw error; // Kalau gagal, lempar error
       
+      // Kalau berhasil:
       setIsLoading(false);
-      setStep('verify-pin');
-      setResendTimer(60); // Start 60s timer
+      setStep('verify-pin'); // Pindah ke Langkah 2 (Isi PIN)
+      setResendTimer(60);    // Mulai hitung mundur 60 detik
     } catch (err: any) {
       setIsLoading(false);
       console.error(err);
@@ -70,11 +93,14 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     }
   };
 
-  // Step 2: Verify OTP ke Supabase
+  // ===========================================================================
+  // 🛡️ LANGKAH 2: CEK KODE PIN
+  // ===========================================================================
   const handleVerifyPin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    // Cek: PIN harus 6 angka
     if (inputPin.length !== 6) {
       setError('Masukkan 6 digit kode PIN');
       return;
@@ -83,17 +109,18 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     setIsLoading(true);
 
     try {
-      // Verifikasi OTP dengan tipe 'recovery'
+      // Tanya Supabase: "Kode ini bener gak?"
       const { error } = await supabase.auth.verifyOtp({
         email: email,
         token: inputPin,
-        type: 'recovery'
+        type: 'recovery' // Tipe pemulihan akun
       });
 
       if (error) throw error;
       
+      // Kalau PIN benar:
       setIsLoading(false);
-      setStep('new-password');
+      setStep('new-password'); // Pindah ke Langkah 3 (Password Baru)
     } catch (err: any) {
       setIsLoading(false);
       console.error(err);
@@ -101,8 +128,9 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     }
   };
 
+  // Fungsi Kirim Ulang Kode (kalau belum masuk)
   const handleResendPin = async () => {
-    if (resendTimer > 0) return;
+    if (resendTimer > 0) return; // Tunggu timer habis dulu
 
     setIsLoading(true);
     setError('');
@@ -123,16 +151,20 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     }
   };
 
-  // Step 3: Update Password via Supabase
+  // ===========================================================================
+  // 🔑 LANGKAH 3: SIMPAN PASSWORD BARU
+  // ===========================================================================
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    // Cek syarat password
     if (passwordForm.new.length < 6) {
       setError('Kata sandi minimal 6 karakter');
       return;
     }
 
+    // Cek apakah password sama
     if (passwordForm.new !== passwordForm.confirm) {
       setError('Konfirmasi kata sandi tidak cocok');
       return;
@@ -141,11 +173,11 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     setIsLoading(true);
 
     try {
-      // Update password using authenticated session from OTP verification
+      // Bilang ke Supabase: "Ganti password user ini ya!"
       await authService.updateUserPassword(passwordForm.new);
       
       setIsLoading(false);
-      setStep('success');
+      setStep('success'); // Pindah ke Langkah 4 (Sukses)
     } catch (err: any) {
       setIsLoading(false);
       console.error(err);
@@ -153,11 +185,17 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
     }
   };
 
+  // ===========================================================================
+  // 🎨 TAMPILAN UTAMA (HTML) - UBAH WARNA & POSISI DI SINI
+  // ===========================================================================
   return (
+    // Layar Hitam Transparan di Belakang
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 font-mono">
+      
+      {/* Kotak Putih Utama */}
       <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md mx-4 animate-in zoom-in-95 duration-300 relative">
         
-        {/* Close Button */}
+        {/* Tombol Silang (X) di Pojok Kanan Atas */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 bg-[#EA4335] border-2 border-black flex items-center justify-center transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
@@ -165,7 +203,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
           <X className="w-5 h-5 text-white" />
         </button>
 
-        {/* HEADER */}
+        {/* --- BAGIAN KEPALA (HEADER BIRU) --- */}
         <div className="pt-12 pb-8 px-8 text-center bg-[#4285F4] border-b-2 border-black">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <Key className="w-8 h-8 text-black" />
@@ -173,6 +211,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
           <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tight text-stroke-black">
             Lupa Sandi?
           </h2>
+          {/* Teks Penjelasan Berubah Sesuai Langkah */}
           <p className="text-white font-bold opacity-90">
             {step === 'email' && 'Masukkan email untuk mencari akunmu'}
             {step === 'verify-pin' && 'Cek email Anda untuk kode verifikasi'}
@@ -181,12 +220,13 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
           </p>
         </div>
 
-        {/* BODY */}
+        {/* --- BAGIAN BADAN (FORMULIR) --- */}
         <div className="p-8">
           
-          {/* STEP 1: EMAIL */}
+          {/* TAMPILAN 1: MASUKKAN EMAIL */}
           {step === 'email' && (
             <form onSubmit={handleVerifyEmail} className="space-y-6">
+              {/* Kotak Pesan Error (Merah) */}
               {error && (
                 <div className="bg-red-50 border-2 border-[#EA4335] p-3 flex items-center gap-3 text-[#EA4335] font-bold text-sm">
                   <AlertCircle className="w-5 h-5" />
@@ -211,13 +251,15 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
                 </div>
               </div>
 
+              {/* Tombol Kirim Kode */}
               <button
                 type="submit"
                 disabled={isLoading}
+                // Ubah warna tombol: 'bg-black' -> 'bg-blue-600'
                 className="w-full bg-black text-white px-6 py-4 border-2 border-black hover:bg-[#FBBC05] hover:text-black transition-all flex items-center justify-center gap-3 font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                   <><Loader2 className="animate-spin w-5 h-5"/> Memproses...</>
+                    <><Loader2 className="animate-spin w-5 h-5"/> Memproses...</>
                 ) : (
                   <>
                     Kirim Kode <ArrowRight className="w-5 h-5" />
@@ -227,7 +269,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
             </form>
           )}
 
-          {/* STEP 2: VERIFY PIN */}
+          {/* TAMPILAN 2: MASUKKAN PIN */}
           {step === 'verify-pin' && (
             <form onSubmit={handleVerifyPin} className="space-y-6">
               {error && (
@@ -253,7 +295,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
                     type="text"
                     maxLength={6}
                     value={inputPin}
-                    onChange={(e) => setInputPin(e.target.value.replace(/[^0-9]/g, ''))}
+                    onChange={(e) => setInputPin(e.target.value.replace(/[^0-9]/g, ''))} // Cuma boleh angka
                     className="w-48 text-center text-3xl tracking-[0.5em] font-black py-3 border-b-4 border-black focus:border-[#4285F4] focus:outline-none transition-all placeholder:text-gray-300"
                     placeholder="••••••"
                     autoFocus
@@ -270,6 +312,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
                   {isLoading ? <><Loader2 className="animate-spin w-5 h-5"/> Memverifikasi...</> : 'Verifikasi PIN'}
                 </button>
                 
+                {/* Tombol Kirim Ulang */}
                 <button
                   type="button"
                   onClick={handleResendPin}
@@ -283,7 +326,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
             </form>
           )}
 
-          {/* STEP 3: NEW PASSWORD */}
+          {/* TAMPILAN 3: GANTI PASSWORD BARU */}
           {step === 'new-password' && (
             <form onSubmit={handleResetPassword} className="space-y-6">
                {error && (
@@ -293,7 +336,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
                 </div>
               )}
 
-              {/* New Password */}
+              {/* Input Password Baru */}
               <div>
                 <label className="block text-sm font-black text-black mb-2 uppercase">Kata Sandi Baru</label>
                 <div className="relative">
@@ -317,7 +360,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
                 </div>
               </div>
 
-              {/* Confirm Password */}
+              {/* Input Konfirmasi Password */}
               <div>
                 <label className="block text-sm font-black text-black mb-2 uppercase">Konfirmasi Kata Sandi</label>
                 <div className="relative">
@@ -351,7 +394,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
             </form>
           )}
 
-          {/* STEP 4: SUCCESS */}
+          {/* TAMPILAN 4: BERHASIL */}
           {step === 'success' && (
             <div className="text-center space-y-6">
               <div className="w-20 h-20 bg-[#34A853] text-white rounded-full flex items-center justify-center mx-auto border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -372,7 +415,7 @@ export default function ForgotPassword({ onClose, onSwitchToLogin }: ForgotPassw
 
         </div>
         
-        {/* Footer Link */}
+        {/* Tombol Batal di Bawah */}
         {step !== 'success' && (
           <div className="bg-gray-50 px-8 py-4 text-center border-t-2 border-black">
               <button

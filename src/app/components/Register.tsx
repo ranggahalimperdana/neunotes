@@ -1,36 +1,44 @@
-import { X, User, Mail, Lock, GraduationCap, BookOpen, Loader2, Building2, Eye, EyeOff } from 'lucide-react';
+import { X, User, Mail, Lock, GraduationCap, Loader2, Building2, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
+// Kabel penghubung ke database (Supabase)
 import { authService, masterService, Faculty, Prodi } from '../services/api';
 
+// --- DAFTAR PERINTAH (PROPS) ---
+// Ini fungsi-fungsi yang dikirim dari halaman utama ke sini
 interface RegisterProps {
-  onClose: () => void;
-  onRegisterSuccess: () => void;
-  onSwitchToLogin: () => void;
+  onClose: () => void;            // Fungsi buat tutup pop-up
+  onRegisterSuccess: () => void;  // Fungsi kalau berhasil daftar
+  onSwitchToLogin: () => void;    // Fungsi buat pindah ke halaman Login
 }
 
+// --- KOMPONEN UTAMA DAFTAR (REGISTER) ---
 export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }: RegisterProps) {
+  
+  // --- MEMORI SEMENTARA (STATE) ---
+  // Tempat nyimpen data yang diketik user
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    facultyId: '', // Menyimpan ID Fakultas (misal: 'FT')
-    prodiId: ''    // Menyimpan ID Prodi (misal: 'PRODI-IF')
+    facultyId: '', // ID Fakultas
+    prodiId: ''    // ID Jurusan
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);        // Intip password
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Intip konfirmasi password
 
-  // State Data Master
+  // Tempat nyimpen daftar Fakultas & Prodi dari database
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [prodiList, setProdiList] = useState<Prodi[]>([]);
   
-  // State UI
+  // Status loading dan error
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [backendError, setBackendError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({}); // Error salah ketik
+  const [backendError, setBackendError] = useState(''); // Error dari server
 
-  // 1. Load Fakultas saat komponen muncul
+  // --- 1. AMBIL DATA FAKULTAS ---
+  // Jalan otomatis pas halaman dibuka
   useEffect(() => {
     const loadFaculties = async () => {
       try {
@@ -43,14 +51,15 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
     loadFaculties();
   }, []);
 
-  // 2. Load Prodi saat Fakultas dipilih
+  // --- 2. AMBIL DATA JURUSAN ---
+  // Jalan otomatis kalau user pilih Fakultas
   useEffect(() => {
     const loadProdi = async () => {
       if (formData.facultyId) {
         try {
           const data = await masterService.getProdiByFaculty(formData.facultyId);
           setProdiList(data);
-          // Reset prodi jika user mengganti fakultas agar tidak mismatch
+          // Kalau ganti fakultas, reset pilihan jurusan biar gak error
           setFormData(prev => ({ ...prev, prodiId: '' })); 
         } catch (err) {
           console.error("Gagal memuat prodi", err);
@@ -62,14 +71,16 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
     loadProdi();
   }, [formData.facultyId]);
 
+  // Fungsi buat nyatet ketikan user ke memori
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Hapus error saat user mengetik
+    // Kalau user ngetik ulang, hapus pesan errornya
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     if (backendError) setBackendError('');
   };
 
+  // --- POLISI PENGECEK (VALIDASI) ---
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -91,26 +102,28 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
     return Object.keys(newErrors).length === 0;
   };
 
+  // --- AKSI SAAT TOMBOL DAFTAR DITEKAN ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBackendError('');
 
-    if (!validateForm()) return;
+    if (!validateForm()) return; // Cek dulu datanya bener gak
 
-    setLoading(true);
+    setLoading(true); // Nyalain loading
 
     try {
+      // Kirim data ke Supabase buat bikin akun baru
       await authService.signUp(formData.email, formData.password, {
         fullName: formData.fullName,
         facultyId: formData.facultyId,
         prodiId: formData.prodiId
       });
 
-      // Jika berhasil
+      // Kalau berhasil
       alert('Registrasi Berhasil! Silakan cek email Anda untuk verifikasi (jika diperlukan) atau langsung Login.');
       onRegisterSuccess();
-      onClose(); // Tutup modal register
-      onSwitchToLogin(); // Buka modal login
+      onClose(); // Tutup pop-up register
+      onSwitchToLogin(); // Buka pop-up login
 
     } catch (error: any) {
       console.error("Register Error:", error);
@@ -120,12 +133,18 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
     }
   };
 
+  // ===========================================================================
+  // BAGIAN TAMPILAN (HTML) - SILAKAN UTAK-ATIK DI SINI
+  // ===========================================================================
   return (
+    // Layar Hitam Transparan di Belakang
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-8 font-mono">
-      {/* Modal */}
+      
+      {/* KOTAK PUTIH UTAMA (MODAL) */}
       <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl mx-4 animate-in zoom-in-95 duration-300 my-8 relative">
 
-        {/* Header */}
+        {/* --- BAGIAN KEPALA (HEADER BIRU) --- */}
+        {/* Ubah warna header di sini: 'bg-[#4285F4]' */}
         <div className="pt-12 pb-8 px-8 text-center bg-[#4285F4] border-b-2 border-black">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <User className="w-8 h-8 text-black" />
@@ -139,18 +158,18 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
           </p>
         </div>
 
-        {/* Error Umum dari Backend */}
+        {/* Kotak Pesan Error dari Server (Kalau ada error) */}
         {backendError && (
             <div className="mx-8 mt-6 bg-red-100 border-2 border-[#EA4335] text-[#EA4335] p-3 font-bold text-center">
                 ⚠️ {backendError}
             </div>
         )}
 
-        {/* Form */}
+        {/* --- FORMULIR ISIAN --- */}
         <form onSubmit={handleSubmit} className="px-8 py-8 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
-            {/* Full Name */}
+            {/* Input Nama Lengkap */}
             <div className="md:col-span-2">
               <label htmlFor="fullName" className="block text-sm font-black text-black mb-2 uppercase">
                 Nama Lengkap <span className="text-[#EA4335]">*</span>
@@ -170,12 +189,13 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
                   } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold placeholder:text-gray-400 placeholder:font-normal`}
                 />
               </div>
+              {/* Pesan Error Nama */}
               {errors.fullName && (
                 <p className="mt-1 text-sm text-[#EA4335] font-bold bg-[#EA4335]/10 p-1 border-l-2 border-[#EA4335]">{errors.fullName}</p>
               )}
             </div>
 
-            {/* Email */}
+            {/* Input Email */}
             <div className="md:col-span-2">
               <label htmlFor="email" className="block text-sm font-black text-black mb-2 uppercase">
                 Email <span className="text-[#EA4335]">*</span>
@@ -200,7 +220,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
               )}
             </div>
 
-            {/* Faculty */}
+            {/* Pilihan Fakultas */}
             <div className="md:col-span-2">
               <label htmlFor="faculty" className="block text-sm font-black text-black mb-2 uppercase">
                 Fakultas <span className="text-[#EA4335]">*</span>
@@ -218,6 +238,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
                   } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all appearance-none bg-white cursor-pointer font-bold`}
                 >
                   <option value="">Pilih fakultas...</option>
+                  {/* Looping data fakultas */}
                   {faculties.map((f) => (
                     <option key={f.id_faculty} value={f.id_faculty}>
                       {f.faculty_name}
@@ -235,7 +256,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
               )}
             </div>
 
-            {/* Prodi */}
+            {/* Pilihan Program Studi */}
             <div className="md:col-span-2">
               <label htmlFor="prodi" className="block text-sm font-black text-black mb-2 uppercase">
                 Program Studi <span className="text-[#EA4335]">*</span>
@@ -248,7 +269,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
                   id="prodi"
                   value={formData.prodiId}
                   onChange={(e) => handleChange('prodiId', e.target.value)}
-                  disabled={!formData.facultyId}
+                  disabled={!formData.facultyId} // Mati kalau fakultas belum dipilih
                   className={`w-full pl-14 pr-4 py-3 border-2 ${
                     errors.prodiId ? 'border-[#EA4335] bg-red-50' : 'border-black'
                   } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all appearance-none bg-white cursor-pointer font-bold disabled:bg-gray-200 disabled:cursor-not-allowed`}
@@ -256,6 +277,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
                   <option value="">
                     {formData.facultyId ? "Pilih program studi..." : "Pilih fakultas dahulu..."}
                   </option>
+                  {/* Looping data jurusan */}
                   {prodiList.map((p) => (
                     <option key={p.id_prodi} value={p.id_prodi}>
                       {p.prodi_name}
@@ -273,7 +295,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
               )}
             </div>
 
-            {/* Password */}
+            {/* Input Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-black text-black mb-2 uppercase">
                 Kata Sandi <span className="text-[#EA4335]">*</span>
@@ -292,6 +314,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
                     errors.password ? 'border-[#EA4335] bg-red-50' : 'border-black'
                   } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold placeholder:text-gray-400 placeholder:font-normal`}
                 />
+                {/* Tombol Intip Password */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -305,7 +328,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
               )}
             </div>
 
-            {/* Confirm Password */}
+            {/* Input Konfirmasi Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-black text-black mb-2 uppercase">
                 Konfirmasi Kata Sandi <span className="text-[#EA4335]">*</span>
@@ -338,10 +361,11 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Tombol DAFTAR SEKARANG */}
           <button
             type="submit"
             disabled={loading}
+            // Ubah warna tombol di sini: 'bg-[#34A853]' (Hijau)
             className="w-full bg-[#34A853] text-white font-black uppercase tracking-wider py-4 px-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? (
@@ -355,7 +379,7 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
           </button>
         </form>
 
-        {/* Footer */}
+        {/* --- BAGIAN BAWAH (FOOTER) --- */}
         <div className="bg-gray-100 px-8 py-6 text-center border-t-2 border-black">
           <p className="text-black font-bold">
             Sudah punya akun?{' '}
@@ -369,9 +393,11 @@ export default function Register({ onClose, onRegisterSuccess, onSwitchToLogin }
           </p>
         </div>
 
-        {/* Close Button - DILETAKKAN PALING BAWAH AGAR MUNCUL PALING DEPAN (Z-INDEX MENANG) */}
+        {/* Tombol CLOSE (Silang) */}
+        {/* Posisinya ada di bawah biar numpuk paling atas (Z-Index menang) */}
         <button
           onClick={onClose}
+          // Ganti warna tombol X: 'bg-[#EA4335]' (Merah)
           className="absolute top-4 right-4 w-8 h-8 bg-[#EA4335] border-2 border-black flex items-center justify-center transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-50"
           aria-label="Close"
         >

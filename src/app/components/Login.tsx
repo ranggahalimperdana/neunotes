@@ -1,26 +1,33 @@
 import { Mail, Lock, Eye, EyeOff, X, LogIn } from 'lucide-react';
 import { useState } from 'react';
-// Import service Supabase yang sudah kita buat
+// Ini kabel penghubung ke database (Supabase)
 import { authService } from '../services/api'; 
 
+// --- DAFTAR PERINTAH (PROPS) ---
+// Ini daftar fungsi yang dikirim dari halaman utama ke halaman login ini.
 interface LoginProps {
-  onClose: () => void;
-  onLoginSuccess: () => void; // Parent component akan handle redirect berdasarkan role nanti
-  onSwitchToRegister: () => void;
-  onForgotPassword: () => void;
+  onClose: () => void;           // Fungsi buat menutup jendela login (tombol silang)
+  onLoginSuccess: () => void;    // Fungsi kalau login berhasil (masuk ke dashboard)
+  onSwitchToRegister: () => void;// Fungsi buat pindah ke halaman Daftar
+  onForgotPassword: () => void;  // Fungsi buat pindah ke halaman Lupa Password
 }
 
+// --- KOMPONEN UTAMA LOGIN ---
 export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword }: LoginProps) {
+  
+  // --- MEMORI SEMENTARA (STATE) ---
+  // Tempat menyimpan apa yang diketik user di layar.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Buat intip password (mata)
   
-  // State error validasi form
+  // Tempat nyimpen pesan error (kalau ada yang salah ketik)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  // State error dari Backend (misal: Password salah)
-  const [backendError, setBackendError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [backendError, setBackendError] = useState(''); // Error dari server (misal: password salah)
+  const [isLoading, setIsLoading] = useState(false);    // Status loading (muter-muter)
 
+  // --- POLISI PENGECEK (VALIDASI) ---
+  // Fungsi ini tugasnya ngecek: Email udah diisi belum? Password kependekan gak?
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
 
@@ -37,23 +44,25 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
     }
 
     setErrors(newErrors);
+    // Kalau tidak ada error (panjang error 0), berarti boleh lanjut
     return Object.keys(newErrors).length === 0;
   };
 
+  // --- AKSI SAAT TOMBOL MASUK DITEKAN ---
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBackendError(''); // Reset error backend
+    e.preventDefault(); // Biar halaman gak refresh sendiri
+    setBackendError(''); // Hapus pesan error lama
 
+    // Panggil polisi pengecek dulu
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsLoading(true); // Nyalakan loading...
 
     try {
-      // 1. Panggil Supabase Login
+      // 1. Bilang ke Supabase: "Cek email & password ini dong!"
       await authService.signIn(email, password);
 
-      // 2. Cek Role User (Optional: untuk memastikan user ada di tabel profiles)
-      // Langkah ini memastikan data profil termuat sebelum menutup modal
+      // 2. Kalau password benar, kita cek data orangnya (Profil)
       const userProfile = await authService.getCurrentUserWithRole();
       
       if (!userProfile) {
@@ -62,33 +71,41 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
 
       console.log("Login Berhasil sebagai:", userProfile.role);
 
-      // 3. Sukses
-      onLoginSuccess(); // Trigger parent (App.tsx) untuk update state user & redirect dashboard
-      onClose(); // Tutup modal
+      // 3. Kalau semua oke, kabari halaman utama kalau login sukses
+      onLoginSuccess(); 
+      onClose(); // Tutup jendela login
 
     } catch (error: any) {
       console.error("Login Error:", error);
-      // Tampilkan pesan error yang user-friendly
+      // Kalau gagal, kasih tau user
       setBackendError('Email atau kata sandi salah. Silakan coba lagi.');
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Matikan loading
     }
   };
 
+  // ===========================================================================
+  // BAGIAN TAMPILAN (HTML) - UBAH WARNA & TULISAN DI SINI
+  // ===========================================================================
   return (
+    // Layar Hitam Transparan di Belakang
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 font-mono">
-      {/* Modal */}
+      
+      {/* Kotak Putih Login */}
       <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md mx-4 animate-in zoom-in-95 duration-300">
-        {/* Close Button */}
+        
+        {/* Tombol Silang (X) di Pojok Kanan Atas */}
         <button
           onClick={onClose}
+          // Ganti warna tombol X: 'bg-[#EA4335]' (Merah)
           className="absolute top-4 right-4 w-8 h-8 bg-[#EA4335] border-2 border-black flex items-center justify-center transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           aria-label="Close"
         >
           <X className="w-5 h-5 text-white" />
         </button>
 
-        {/* Header */}
+        {/* --- KEPALA POP-UP (HEADER) --- */}
+        {/* Ganti warna header: 'bg-[#FBBC05]' (Kuning) */}
         <div className="pt-12 pb-8 px-8 text-center bg-[#FBBC05] border-b-2 border-black">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <LogIn className="w-8 h-8 text-black" />
@@ -102,16 +119,17 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
           </p>
         </div>
 
-        {/* Backend Error Alert (Ditambahkan agar user tahu jika login gagal) */}
+        {/* Kotak Pesan Error dari Server (Kalau password salah) */}
         {backendError && (
           <div className="mx-8 mt-6 bg-red-100 border-2 border-[#EA4335] text-[#EA4335] p-3 font-bold text-center text-sm">
-            ⚠️ {backendError}
+             {backendError}
           </div>
         )}
 
-        {/* Form */}
+        {/* --- FORMULIR ISIAN --- */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {/* Email Input */}
+          
+          {/* Input Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-black text-black mb-2 uppercase">
               Email
@@ -126,8 +144,9 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  // Kalau ngetik lagi, hapus pesan errornya
                   if (errors.email) setErrors({ ...errors, email: undefined });
-                  if (backendError) setBackendError(''); // Hapus error backend saat mengetik
+                  if (backendError) setBackendError('');
                 }}
                 placeholder="nama@email.com"
                 className={`w-full pl-14 pr-4 py-3 border-2 ${
@@ -135,17 +154,19 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
                 } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold placeholder:text-gray-400 placeholder:font-normal`}
               />
             </div>
+            {/* Pesan Error Email (Muncul di bawah kotak input) */}
             {errors.email && (
               <p className="mt-1 text-sm text-[#EA4335] font-bold bg-[#EA4335]/10 p-1 border-l-2 border-[#EA4335]">{errors.email}</p>
             )}
           </div>
 
-          {/* Password Input */}
+          {/* Input Password */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label htmlFor="password" className="block text-sm font-black text-black uppercase">
                 Kata Sandi
               </label>
+              {/* Tombol Lupa Sandi */}
               <button
                 type="button"
                 className="text-xs font-bold text-[#4285F4] hover:underline decoration-2"
@@ -172,24 +193,22 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
                   errors.password ? 'border-[#EA4335] bg-red-50' : 'border-black'
                 } focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold placeholder:text-gray-400 placeholder:font-normal`}
               />
+              {/* Tombol Mata (Intip Password) */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-[#4285F4] transition-colors"
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {/* Pesan Error Password */}
             {errors.password && (
               <p className="mt-1 text-sm text-[#EA4335] font-bold bg-[#EA4335]/10 p-1 border-l-2 border-[#EA4335]">{errors.password}</p>
             )}
           </div>
 
-          {/* Submit Button */}
+          {/* Tombol Masuk Utama */}
           <button
             type="submit"
             disabled={isLoading}
@@ -197,6 +216,7 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
+                {/* Animasi Muter-muter */}
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -209,7 +229,7 @@ export default function Login({ onClose, onLoginSuccess, onSwitchToRegister, onF
           </button>
         </form>
 
-        {/* Footer */}
+        {/* --- BAGIAN BAWAH (FOOTER) --- */}
         <div className="bg-gray-100 px-8 py-6 text-center border-t-2 border-black">
           <p className="text-black font-bold">
             Belum punya akun?{' '}
